@@ -489,11 +489,32 @@ async def handle_unlink(message: Message) -> None:
 dispatcher.include_router(router)
 
 
+async def run_telegram_polling() -> None:
+    while True:
+        try:
+            logger.info("Starting Telegram polling...")
+
+            # TODO: Это временная страховка для polling-режима.
+            # Если позже бот будет работать через webhook, этот вызов нужно убрать,
+            # иначе приложение будет удалять настроенный webhook при старте polling.
+            await bot.delete_webhook(drop_pending_updates=True)
+
+            await dispatcher.start_polling(bot, handle_signals=False)
+
+            logger.warning("Telegram polling finished without exception")
+        except asyncio.CancelledError:
+            logger.info("Telegram polling task cancelled")
+            raise
+        except Exception:
+            logger.exception("Telegram polling crashed")
+            await asyncio.sleep(5)
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     await init_db()
 
-    polling_task = asyncio.create_task(dispatcher.start_polling(bot))
+    polling_task = asyncio.create_task(run_telegram_polling())
 
     try:
         yield
