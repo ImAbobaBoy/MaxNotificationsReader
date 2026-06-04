@@ -1,5 +1,0 @@
-BOT_TOKEN=8971234748:AAH-anJys3yTY0h_vqca6Sdp1SRAnk2QTro
-APP_SECRET=app_sxcrxt_tgtgtgtgtgtgtgtgtgtg
-DB_PATH=bridge.db
-PAIRING_TTL_SECONDS=600
-MAX_PACKAGE_NAME=ru.oneme.app
