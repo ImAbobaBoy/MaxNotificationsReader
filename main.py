@@ -490,14 +490,10 @@ dispatcher.include_router(router)
 
 
 @asynccontextmanager
+@asynccontextmanager
 async def lifespan(_: FastAPI):
     await init_db()
 
-    # TODO: Временная защитная мера для polling-режима.
-    # Если позже перейдём на Telegram webhook, этот вызов нужно убрать.
-    await bot.delete_webhook(drop_pending_updates=True)
-
-    logger.info("Starting Telegram polling...")
     polling_task = asyncio.create_task(dispatcher.start_polling(bot))
 
     try:
