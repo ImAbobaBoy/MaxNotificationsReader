@@ -1,5 +1,6 @@
 import asyncio
 import hashlib
+import logging
 import hmac
 import os
 import time
@@ -18,6 +19,8 @@ from pydantic import BaseModel, Field
 
 load_dotenv()
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class Settings:
@@ -490,6 +493,11 @@ dispatcher.include_router(router)
 async def lifespan(_: FastAPI):
     await init_db()
 
+    # TODO: Временная защитная мера для polling-режима.
+    # Если позже перейдём на Telegram webhook, этот вызов нужно убрать.
+    await bot.delete_webhook(drop_pending_updates=True)
+
+    logger.info("Starting Telegram polling...")
     polling_task = asyncio.create_task(dispatcher.start_polling(bot))
 
     try:
