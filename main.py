@@ -490,7 +490,6 @@ dispatcher.include_router(router)
 
 
 @asynccontextmanager
-@asynccontextmanager
 async def lifespan(_: FastAPI):
     await init_db()
 
