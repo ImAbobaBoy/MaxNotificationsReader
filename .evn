@@ -1,0 +1,5 @@
+BOT_TOKEN=1234567890:telegram_bot_token_here
+APP_SECRET=app_sxcrxt_tgtgtgtgtgtgtgtgtgtg
+DB_PATH=bridge.db
+PAIRING_TTL_SECONDS=600
+MAX_PACKAGE_NAME=ru.oneme.app
