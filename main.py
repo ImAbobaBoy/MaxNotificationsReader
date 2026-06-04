@@ -123,14 +123,19 @@ def make_event_hash(device_id: str, payload: MaxNotificationRequest) -> str:
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
-async def open_db() -> aiosqlite.Connection:
+@asynccontextmanager
+async def open_db():
     db = await aiosqlite.connect(settings.db_path)
     db.row_factory = aiosqlite.Row
-    return db
+
+    try:
+        yield db
+    finally:
+        await db.close()
 
 
 async def init_db() -> None:
-    async with await open_db() as db:
+    async with open_db() as db:
         await db.executescript(
             """
             CREATE TABLE IF NOT EXISTS devices (
@@ -165,7 +170,7 @@ async def init_db() -> None:
 
 
 async def get_device_by_id(device_id: str) -> Optional[aiosqlite.Row]:
-    async with await open_db() as db:
+    async with open_db() as db:
         cursor = await db.execute(
             """
             SELECT *
@@ -184,7 +189,7 @@ async def register_or_refresh_device(request: RegisterDeviceRequest) -> None:
     device_secret_hash = hash_device_secret(request.deviceSecret)
     expires_at = current_time + settings.pairing_ttl_seconds
 
-    async with await open_db() as db:
+    async with open_db() as db:
         cursor = await db.execute(
             """
             SELECT *
@@ -256,7 +261,7 @@ async def find_pending_devices_by_code(pairing_code: str) -> list[aiosqlite.Row]
     pairing_code_hash = hash_pairing_code(pairing_code)
     current_time = now_seconds()
 
-    async with await open_db() as db:
+    async with open_db() as db:
         cursor = await db.execute(
             """
             SELECT *
@@ -273,7 +278,7 @@ async def find_pending_devices_by_code(pairing_code: str) -> list[aiosqlite.Row]
 async def link_device_to_chat(device_id: str, telegram_chat_id: int) -> None:
     current_time = now_seconds()
 
-    async with await open_db() as db:
+    async with open_db() as db:
         await db.execute(
             """
             UPDATE devices
@@ -298,7 +303,7 @@ async def link_device_to_chat(device_id: str, telegram_chat_id: int) -> None:
 async def unlink_chat_devices(telegram_chat_id: int) -> int:
     current_time = now_seconds()
 
-    async with await open_db() as db:
+    async with open_db() as db:
         cursor = await db.execute(
             """
             UPDATE devices
@@ -319,7 +324,7 @@ async def unlink_chat_devices(telegram_chat_id: int) -> int:
 
 
 async def list_chat_devices(telegram_chat_id: int) -> list[aiosqlite.Row]:
-    async with await open_db() as db:
+    async with open_db() as db:
         cursor = await db.execute(
             """
             SELECT *
@@ -371,7 +376,7 @@ async def authenticate_device(
 async def remember_event_once(event_hash: str, device_id: str) -> bool:
     current_time = now_seconds()
 
-    async with await open_db() as db:
+    async with open_db() as db:
         try:
             await db.execute(
                 """
